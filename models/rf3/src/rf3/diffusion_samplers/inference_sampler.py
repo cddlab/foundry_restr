@@ -117,6 +117,7 @@ class SampleDiffusion:
         diffusion_module: torch.nn.Module,
         diffusion_batch_size: int,
         coord_atom_lvl_to_be_noised: Float[torch.Tensor, "D L 3"],
+        restraints: Any | None = None,
     ) -> dict[str, Any]:
         """Perform a complete diffusion roll-out with the given recycling outputs.
 
@@ -146,7 +147,9 @@ class SampleDiffusion:
         X_denoised_L_traj = []
         t_hats = []
 
-        for c_t_minus_1, c_t in zip(noise_schedule, noise_schedule[1:]):
+        for step, (c_t_minus_1, c_t) in enumerate(
+            zip(noise_schedule, noise_schedule[1:])
+        ):
             # (All predicted atoms exist)
             X_exists_L = torch.ones((D, L)).bool()  # (D, L)
 
@@ -179,6 +182,10 @@ class SampleDiffusion:
                 Z_trunk_II=Z_trunk_II,
             )
 
+            if restraints is not None:
+                # Gate on the schedule sigma before churn, as in other RGI tools.
+                X_denoised_L = restraints.minimize(X_denoised_L, step, c_t_minus_1)
+
             # Compute the delta between the noisy and denoised coordinates, scaled by t_hat
             delta_L = (X_noisy_L - X_denoised_L) / t_hat
             d_t = c_t - t_hat
@@ -194,6 +201,9 @@ class SampleDiffusion:
             X_noisy_L_traj.append(X_noisy_L_scaled)
             X_denoised_L_traj.append(X_denoised_L)
             t_hats.append(t_hat)
+
+        if restraints is not None:
+            restraints.finalize(X_L, len(t_hats) - 1)
 
         return dict(
             X_L=X_L,  # (D, L, 3)

@@ -13,6 +13,13 @@ For more information, please see our preprint, [Accelerating Biomolecular Modeli
 
 This guide provides instructions on preparing inputs and running inference for RF3. 
 
+## Restraint-Guided Inference
+
+This fork accepts a per-job `restraints_config` dictionary for RGI during RF3
+sampling. See the [RGI guide](docs/rgi.md) for installation,
+the shared restraint types, component conformer opt-ins, Python API and examples.
+Start with `bash examples/rgi/run.sh` from the repository root.
+
 ##  Installation, Setup, and a Basic Prediction
 If you have already installed all of the models available in Foundry and downloaded the available model weights (see the [Foundry README](../../README.md) for details), skip [here](#c-run-a-test-prediction). 
 
@@ -642,4 +649,3 @@ view(atom_array)
 **Alternative viewing options:**
 - View in PyMol like normal, or using `pymol_remote`
 - Use the `view_pymol()` function for direct PyMol integration
-

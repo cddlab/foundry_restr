@@ -47,6 +47,7 @@ dependencies = [
     "ipykernel>=6.31.0",
     "assertpy",
     "toolz",
+    "rgi-toolkit @ git+https://github.com/cddlab/rgi_toolkit.git",
 ]
 
 

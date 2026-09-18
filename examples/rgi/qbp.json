@@ -1,0 +1,15 @@
+{
+  "name": "qbp_25",
+  "components": [{
+    "chain_id": "A",
+    "seq": "ADKKLVVATDTAFVPFEFKQGDKYVGFDVDLWAAIAKELKLDYELKPMDFSGIIPALQTKNVDLALAGITITDERKKAIDFSDGYYKSGLLVMVKANNNDVKSVKDLDGKVVAVKSGTGSVDYAKANIKTKDLRQFPNIDNAYMELGTNRADAVLHDTPNILYFIKTAGNGQFKAVGDSLEAQQYGIAFPKGSDELRDKVNGALKTLRENGTYNEIYKKWFGTEPK"
+  }],
+  "restraints_config": {
+    "verbose": true,
+    "distance_restraints_config": [{
+      "atom_selection1": "chain A and ((resid 5 to 84) or (resid 186 to 224))",
+      "atom_selection2": "chain A and resid 90 to 180",
+      "harmonic": {"target_distance": 25.0}
+    }]
+  }
+}

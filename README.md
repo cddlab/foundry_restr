@@ -4,6 +4,16 @@ Foundry provides tooling and infrastructure for using and training all classes o
 
 All models within Foundry rely on [AtomWorks](https://github.com/RosettaCommons/atomworks) - a unified framework for manipulating and processing biomolecular structures - for both training and inference. 
 
+## Restraint-Guided Inference for RF3
+
+The `rgi-integration` branch adds [RGI-toolkit](https://github.com/cddlab/rgi_toolkit)
+restraints to RF3's diffusion loop. Put `restraints_config` in each input JSON job;
+see the [RGI guide](models/rf3/docs/rgi.md) and
+[runnable examples](examples/rgi/). Install this checkout with
+`uv pip install --python .venv/bin/python --torch-backend cu128 -c constraints-rf3.txt -e '.[rf3]'`
+after creating the environment.
+
+
 
 > [!NOTE]
 > We have a slack now! Join for updates and to get your questions answered [here](https://join.slack.com/t/proteinmodelfoundry/shared_invite/zt-3pj032444-jC8MRqsV8nhpKX0PGowQ4A).

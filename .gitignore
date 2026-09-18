@@ -232,3 +232,6 @@ logs/
 # AI
 **/CLAUDE.md
 **/.claude
+# Reproducible local RGI validation artifacts and prediction outputs.
+.rgi-validation/
+examples/rgi/outputs/

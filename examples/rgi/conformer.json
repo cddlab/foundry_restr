@@ -1,0 +1,16 @@
+{
+  "name": "ligand_conformers",
+  "components": [
+    {"seq": "GLKEMALQ", "chain_id": "A"},
+    {"ccd_code": "ATP", "chain_id": "B", "conformer_restraints": true},
+    {"smiles": "O=C(O)/C=C/C(=O)O", "chain_id": "C", "conformer_restraints": true}
+  ],
+  "restraints_config": {
+    "verbose": true,
+    "conformer_restraints_config": {
+      "start_sigma": 2.0,
+      "plane": {"weight": 1.0},
+      "vdw": {"weight": 1.0, "mode": "both"}
+    }
+  }
+}

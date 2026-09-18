@@ -116,6 +116,8 @@ class RF3Trainer(FabricTrainer):
             "t": example["t"],
             "f": example["feats"],
         }
+        if "restraints" in example:
+            network_input["restraints"] = example["restraints"]
 
         try:
             assert_no_nans(

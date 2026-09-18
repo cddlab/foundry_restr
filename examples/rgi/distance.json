@@ -1,0 +1,30 @@
+[
+  {
+    "name": "distance_12",
+    "components": [{"seq": "GLKEMALQ", "chain_id": "A"}],
+    "restraints_config": {
+      "verbose": true,
+      "distance_restraints_config": [
+        {
+          "atom_selection1": "chain A and resid 1 and name CA",
+          "atom_selection2": "chain A and resid 8 and name CA",
+          "harmonic": {"target_distance": 12.0}
+        }
+      ]
+    }
+  },
+  {
+    "name": "distance_20",
+    "components": [{"seq": "GLKEMALQ", "chain_id": "A"}],
+    "restraints_config": {
+      "verbose": true,
+      "distance_restraints_config": [
+        {
+          "atom_selection1": "chain A and resid 1 and name CA",
+          "atom_selection2": "chain A and resid 8 and name CA",
+          "harmonic": {"target_distance": 20.0}
+        }
+      ]
+    }
+  }
+]

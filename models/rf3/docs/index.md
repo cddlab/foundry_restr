@@ -1,5 +1,12 @@
 # RF3 Documentation
 
+```{toctree}
+:maxdepth: 1
+
+rgi
+rgi-validation
+```
+
 ```{warning}
 The documentation for RF3 is currently incomplete. If you would like
 to contribute, feel free to open a PR!

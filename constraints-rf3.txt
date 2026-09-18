@@ -1,0 +1,7 @@
+# Validated CUDA inference stack for the RF3 RGI integration.
+# Keep the cuEquivariance components aligned with the pinned PyTorch version.
+-c ci-constraints.txt
+cuequivariance==0.6.1
+cuequivariance-torch==0.6.1
+cuequivariance-ops-cu12==0.6.1
+cuequivariance-ops-torch-cu12==0.6.1

@@ -1,11 +1,12 @@
 import json
 import logging
 import os
+from collections.abc import Iterable
 from concurrent.futures import ProcessPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from os import PathLike
 from pathlib import Path
-from typing import Iterable, cast
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,7 @@ from atomworks.io.tools.inference import (
     ChemicalComponent,
     build_msa_paths_by_chain_id_from_component_list,
     components_to_atom_array,
+    standardize_component_keys,
 )
 from atomworks.io.transforms.categories import category_to_dict
 from atomworks.io.utils.selection import AtomSelectionStack
@@ -68,6 +70,9 @@ class InferenceInput:
     template_selection: list[str] | str | None = None
     ground_truth_conformer_selection: list[str] | str | None = None
     cyclic_chains: list[str] | None = None
+    restraints_config: dict | None = None
+    conformer_restraints: dict[str, bool] = field(default_factory=dict)
+    rgi_components: list[ChemicalComponent] = field(default_factory=list, repr=False)
 
     @classmethod
     def from_cif_path(
@@ -77,6 +82,8 @@ class InferenceInput:
         template_selection: list[str] | str | None = None,
         ground_truth_conformer_selection: list[str] | str | None = None,
         add_missing_atoms: bool = True,
+        restraints_config: dict | None = None,
+        conformer_restraints: dict[str, bool] | None = None,
     ) -> "InferenceInput":
         """Load from CIF/PDB file.
 
@@ -140,6 +147,8 @@ class InferenceInput:
             example_id=example_id,
             template_selection=final_template_sel,
             ground_truth_conformer_selection=final_conformer_sel,
+            restraints_config=restraints_config,
+            conformer_restraints=dict(conformer_restraints or {}),
         )
 
     @classmethod
@@ -148,6 +157,8 @@ class InferenceInput:
         data: dict,
         template_selection: list[str] | str | None = None,
         ground_truth_conformer_selection: list[str] | str | None = None,
+        *,
+        base_dir: PathLike | None = None,
     ) -> "InferenceInput":
         """Create from JSON dict with components.
 
@@ -164,14 +175,43 @@ class InferenceInput:
         # Build atom_array from components. With return_components=True the call returns a
         # (AtomArray, components) tuple, but its annotated return type drops the tuple form,
         # so cast to recover the unpacked element types.
+        components: list[ChemicalComponent | dict] = []
+        conformer_flags = []
+        for component in data["components"]:
+            component = standardize_component_keys(component)
+            enabled = component.pop("conformer_restraints", False)
+            if not isinstance(enabled, bool):
+                raise TypeError("Component conformer_restraints must be a boolean")
+            chain_ids = component.get("chain_id")
+            copies = len(chain_ids) if isinstance(chain_ids, list) else 1
+            conformer_flags.extend([enabled] * copies)
+            components.append(component)
+
         atom_array, component_list = cast(
             "tuple[AtomArray, list[ChemicalComponent]]",
             components_to_atom_array(
-                data["components"],
+                components,
                 bonds=data.get("bonds"),
                 return_components=True,
             ),
         )
+
+        conformer_restraints = {}
+        for component, enabled in zip(component_list, conformer_flags, strict=True):
+            chain_ids = (
+                [component.chain_id]
+                if hasattr(component, "chain_id")
+                else np.unique(getattr(component, "atom_array").chain_id)
+            )
+            conformer_restraints.update({str(chain): enabled for chain in chain_ids})
+
+        restraints_config = data.get("restraints_config")
+        if restraints_config is not None:
+            from rgi_toolkit.config import resolve_restraints_config
+
+            restraints_config = resolve_restraints_config(
+                restraints_config, base_dir=base_dir
+            )
 
         parsed = parse_atom_array(
             atom_array,
@@ -218,6 +258,9 @@ class InferenceInput:
             example_id=data["name"],
             template_selection=final_template_sel,
             ground_truth_conformer_selection=final_conformer_sel,
+            restraints_config=restraints_config,
+            conformer_restraints=conformer_restraints,
+            rgi_components=component_list,
         )
 
     @classmethod
@@ -228,6 +271,8 @@ class InferenceInput:
         example_id: str | None = None,
         template_selection: list[str] | str | None = None,
         ground_truth_conformer_selection: list[str] | str | None = None,
+        restraints_config: dict | None = None,
+        conformer_restraints: dict[str, bool] | None = None,
     ) -> "InferenceInput":
         """Create from AtomArray.
 
@@ -271,6 +316,8 @@ class InferenceInput:
             example_id=example_id or f"inference_{id(atom_array)}",
             template_selection=template_selection,
             ground_truth_conformer_selection=ground_truth_conformer_selection,
+            restraints_config=restraints_config,
+            conformer_restraints=dict(conformer_restraints or {}),
         )
 
     def to_pipeline_input(self) -> dict:
@@ -280,6 +327,28 @@ class InferenceInput:
           Pipeline input dict with example_id, atom_array, and chain_info.
         """
         atom_array = self.atom_array.copy()
+
+        if self.conformer_restraints:
+            unknown = set(self.conformer_restraints) - set(atom_array.chain_id)
+            if unknown:
+                raise ValueError(
+                    f"Unknown conformer restraint chains: {sorted(unknown)}"
+                )
+            if any(
+                not isinstance(flag, bool)
+                for flag in self.conformer_restraints.values()
+            ):
+                raise TypeError("conformer_restraints values must be booleans")
+            atom_array.set_annotation(
+                "conformer_restraints",
+                np.array(
+                    [
+                        self.conformer_restraints.get(str(chain), False)
+                        for chain in atom_array.chain_id
+                    ],
+                    dtype=bool,
+                ),
+            )
 
         # Apply template and conformer selections
         atom_array = apply_conformer_and_template_selections(
@@ -350,6 +419,7 @@ def _process_single_path(
                         item,
                         template_selection=template_selection,
                         ground_truth_conformer_selection=ground_truth_conformer_selection,
+                        base_dir=path.parent,
                     )
                 )
 

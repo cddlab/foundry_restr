@@ -199,6 +199,7 @@ class RF3(nn.Module):
             # tensor; the `None` default only ever survives the training branch above (which
             # ignores it). Inference callers always pass coords, hence the cast.
             sample_diffusion_outs = self.inference_sampler.sample_diffusion_like_af3(
+                restraints=input.get("restraints"),
                 f=input["f"],
                 S_inputs_I=recycling_outputs["S_inputs_I"],
                 S_trunk_I=recycling_outputs["S_I"],
@@ -474,6 +475,7 @@ class RF3WithConfidence(RF3):
                 # Full diffusion rollout (no gradients still)
                 sample_diffusion_outs = (
                     self.inference_sampler.sample_diffusion_like_af3(
+                        restraints=input.get("restraints"),
                         f=input["f"],
                         S_inputs_I=recycling_outputs["S_inputs_I"],
                         S_trunk_I=recycling_outputs["S_I"],

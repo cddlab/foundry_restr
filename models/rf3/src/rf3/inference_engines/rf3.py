@@ -544,6 +544,13 @@ class RF3InferenceEngine(BaseInferenceEngine):
             # Run through Transform pipeline
             pipeline_output = self.pipeline(input_spec.to_pipeline_input())
 
+            if input_spec.restraints_config is not None:
+                from rf3.utils.restraints import build_rf3_restraints
+
+                pipeline_output["restraints"] = build_rf3_restraints(
+                    input_spec, pipeline_output
+                )
+
             # Setup early stopping function if configured
             should_early_stop_fn = None
             if (
