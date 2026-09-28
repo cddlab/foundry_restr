@@ -108,6 +108,10 @@ source = "vcs"
 fallback-version = "0.0.0"
 local-scheme = "no-local-version"
 
+# Keep the RGI integration version separate from the upstream package version.
+[tool.hatch.version.raw-options]
+git_describe_command = "git describe --dirty --tags --long --abbrev=40 --match v[0-9]*"
+
 [tool.hatch.build.hooks.vcs]
 version-file = "src/foundry/version.py"
 tag-pattern = "^v(?P<version>.*)$"
